@@ -2,24 +2,44 @@
 ## input: HVR data files (Excel), BD's Excel scripts
 ## output: R dataframe with HVR IFD data and BD' MLH1 data
 
-data_HRV_P0 = read.csv("C:/Users/alpeterson7/Documents/HannahVR/HVR_IFD_P0.csv", header=TRUE)
+data_HVR_P0 = read.csv("C:/Users/alpeterson7/Documents/HannahVR/HVR_IFD_P0.csv", header=TRUE)
 
 #add REV.tif to end of file name for CAST
 #CAST add '.tif'
 #PWD, remove 'PWD' from begining these files dont have rev
 #F2. remove CXP from begining, REV.tif is theme_replace
-data_HRV_P0$File.ID <- ifelse( grepl("CAST", data_HRV_P0$File.ID), paste(data_HRV_P0$File.ID, ".tif", sep=""),
-                ifelse(grepl("PWD", data_HRV_P0$File.ID), substring(data_HRV_P0$File.ID, 4), 
-                ifelse(grepl("CXP", data_HRV_P0$File.ID), substring(data_HRV_P0$File.ID, 4), "" ) ) )     
+data_HVR_P0$File.ID <- ifelse( grepl("CAST", data_HVR_P0$File.ID), paste(data_HVR_P0$File.ID, ".tif", sep=""),
+                ifelse(grepl("PWD", data_HVR_P0$File.ID), substring(data_HVR_P0$File.ID, 4), 
+                ifelse(grepl("CXP", data_HVR_P0$File.ID), substring(data_HVR_P0$File.ID, 4), "" ) ) )     
 
-colnames(data_HRV_P0) <- c("File.ID", "Cross", "Animal.ID", 
+
+
+colnames(data_HVR_P0) <- c("File.ID", "Cross", "Animal.ID", 
                            "Cell.Count", "n3CO", "Biv.ID", "IFD")
 
 #add animal.id col
-for(i in 1:length(data_HRV_P0$File.ID)){
-  mouse_list = strsplit(as.character(data_HRV_P0$File.ID[i]), split="_")[[1]]
-  data_HRV_P0$Animal.ID[i] = mouse_list[1] 
+for(i in 1:length(data_HVR_P0$File.ID)){
+  mouse_list = strsplit(as.character(data_HVR_P0$File.ID[i]), split="_")[[1]]
+  data_HVR_P0$Animal.ID[i] = mouse_list[1] 
 }
+
+#add 3CO data to n3CO col
+CO3s <- ddply(data_HVR_P0, .(File.ID), summarize,
+                #if Biv.ID is duplicated, 3CO.. if there is a Biv.ID that isn't unique... count as a 3CO
+    #if max and length differ, that indicates there is a 3CO 
+                max = max(Biv.ID),
+                measures = length(Biv.ID),
+                n3CO = measures-max
+)
+CO3s
+
+#push CO3s into P0 dataframe
+
+#mact
+data_HVR_P0$n3CO = CO3s
+
+#(xu <- x[!duplicated(x)])
+
 
 #HVR full data set
 data_HVR = read.csv("C:/Users/alpeterson7/Documents/HannahVR/HVR_IFD_DATA_Aug17.csv", header=TRUE)
@@ -57,7 +77,7 @@ data_HVR_full
 
 
 #LOAD BD data
-#
+
 BDdata_F2 = read.csv("C:/Users/alpeterson7/Documents/HannahVR/BD_F2_RecombinationPhenotypes.csv", header=TRUE)
 BDdata_F2$ANIMAL_ID <- as.factor(BDdata_F2$ANIMAL_ID)
 #seprate by mouse, calculate average within mouse var  and average between mouse var
@@ -66,36 +86,27 @@ BD_MLH1_data = rbind(BDdata_F2, BDdata_P0)
 
 #change CXPF2 to F2 OR viceversa
 
-mlh1 <- BD_MLH1_data[BD_MLH1_data$Cross == "CxPF2", ]
-mean(mlh1$nMLH1_foci )
+#mlh1 <- BD_MLH1_data[BD_MLH1_data$Cross == "CxPF2", ]
+#mean(mlh1$nMLH1_foci )
 
 
 #create file name col for mating with HVR data
 BD_MLH1_data$file_name <- do.call(paste, c(BD_MLH1_data[c("ANIMAL_ID", "Slide_ID", "CellNumber")], sep = "_")) 
 
-#added (REV) ending to file names unless it is in the nonrv list
+BD_MLH1_data$file_name <- do.call(paste, c(BD_MLH1_data[c("ANIMAL_ID", "Slide_ID", "CellNumber")], sep = "_"))
 
 REV <- subset(BD_MLH1_data$file_name, !(BD_MLH1_data$file_name %in% nonrv) ) #this returns a matrix of T OR F
+length(REV)#same length as full dataframe
+#IT seems like my versions of BD's data don't have the nonREV data... most 'file names should match (ie are useful for mergeing)
 
+BD_MLH1_data$file_name <- paste( (BD_MLH1_data$file_name[!(BD_MLH1_data$file_name %in% nonrv)]) , "_REV.tif", sep="")
 
-BD_MLH1_data$file_name <- paste(BD_MLH1_data[!(BD_MLH1_data$file_name %in% nonrv)]$file_name, "_REV.tif", sep="")
+#BD_MLH1_data <- subset(BD_MLH1_data, select = -c(file_name) )#$FractDistFromCent, RawDistFromCent
 
-data_HVR_full$File.ID[!grepl("REV", data_HVR_full$File.ID)]
-
-BD_MLH1_data$file_name <- paste( (BD_MLH1_data$ANIMAL_ID[!(BD_MLH1_data$file_name %in% nonrv)] ), "_REV.tif", sep="")
-
-#non rv pieces have '.tif' this won't match anything
-
-list <- BD_MLH1_data$ANIMAL_ID[!(BD_MLH1_data$ANIMAL_ID %in% nonrv)]  #this gives correct numbers
-
-
-BD_MLH1_data <- subset(BD_MLH1_data, select = -c(file_name) )#$FractDistFromCent, RawDistFromCent
-
-#don't think these kept PWD and CAST
 #TODO for merge file, make sure cross categories are consistent, make sure file names are correct
 mergd_file_name <- merge.data.frame(BD_MLH1_data, data_HVR_full, by.y = "File.ID", by.x = "file_name", all=FALSE)
 
-mergd_file_name_B <- merge.data.frame(data_HVR_full, BD_MLH1_data, by.x = "File.ID", by.y = "file_name", all=FALSE)
+rm(BDdata_P0, BDdata_F2)
 
 #HVR length(data_HVR_full$File.ID), 7485
 #BD length(BD_MLH1_data$file_name)
@@ -108,10 +119,11 @@ mergd_file_name_B <- merge.data.frame(data_HVR_full, BD_MLH1_data, by.x = "File.
 #correctly merging BD' MLH1 data to HVR IFD data
 # - remove cells from BD data not in HVR data
 
-mergd_PWD <- mergd_file_name[mergd_file_name$Cross.x == "PWD", ] #the file names for many PWD don't match
-mergd_CAST <- mergd_file_name[mergd_file_name$Cross.x == "CAST", ]
-mergd_F2 <- mergd_file_name[mergd_file_name$Cross.x == "CxPF2", ]
+data_PWD <- mergd_file_name[mergd_file_name$Cross.x == "PWD", ] #the file names for many PWD don't match
+data_CAST <- mergd_file_name[mergd_file_name$Cross.x == "CAST", ]
+data_F2 <- mergd_file_name[mergd_file_name$Cross.x == "CxPF2", ]
 
-
+#FINAL 
 ## save data
+setwd("C:/Users/alpeterson7/Documents/HannahVR/HVRrepo/")
 save.image("HVR_data_setup.RData")
