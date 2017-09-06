@@ -9,13 +9,13 @@ data_HRV_P0 = read.csv("C:/Users/alpeterson7/Documents/HannahVR/HVR_IFD_P0.csv",
 #PWD, remove 'PWD' from begining these files dont have rev
 #F2. remove CXP from begining, REV.tif is theme_replace
 data_HRV_P0$File.ID <- ifelse( grepl("CAST", data_HRV_P0$File.ID), paste(data_HRV_P0$File.ID, ".tif", sep=""),
-                               ifelse(grepl("PWD", data_HRV_P0$File.ID), substring(data_HRV_P0$File.ID, 4), 
-                                      ifelse(grepl("CXP", data_HRV_P0$File.ID), substring(data_HRV_P0$File.ID, 4), "" ) ) )     
+                ifelse(grepl("PWD", data_HRV_P0$File.ID), substring(data_HRV_P0$File.ID, 4), 
+                ifelse(grepl("CXP", data_HRV_P0$File.ID), substring(data_HRV_P0$File.ID, 4), "" ) ) )     
 
 colnames(data_HRV_P0) <- c("File.ID", "Cross", "Animal.ID", 
                            "Cell.Count", "n3CO", "Biv.ID", "IFD")
 
-#add mouse col
+#add animal.id col
 for(i in 1:length(data_HRV_P0$File.ID)){
   mouse_list = strsplit(as.character(data_HRV_P0$File.ID[i]), split="_")[[1]]
   data_HRV_P0$Animal.ID[i] = mouse_list[1] 
@@ -26,6 +26,7 @@ data_HVR = read.csv("C:/Users/alpeterson7/Documents/HannahVR/HVR_IFD_DATA_Aug17.
 #seperate 2CO from 3CO
 
 #merge two data sets
+#remove some columns with -c()
 data_HVR <- subset(data_HVR, select = -c(Notes, Date.Collected, X, X.1, X.2, X.3, X.4, X.5, X.6) )
 
 colnames(data_HVR) <- c("File.ID", "Cross", "Animal.ID", 
@@ -37,26 +38,23 @@ data_HVR_full <- rbind(data_HRV_P0, data_HVR)
 
 
 ##I don't know why this isn't working 
+data_HVR_full$File.ID <- as.character(data_HVR_full$File.ID)
 
-nonREV_FileNames <- c()
-REV_FileNames <- c()
+#find file names that don't contain REV
+nonrv <- data_HVR_full$File.ID[!grepl("REV", data_HVR_full$File.ID)]
+nonrv <- unique(nonrv)
+nonrv <- gsub('.tif', '', nonrv)#remove '.tif' for better matching
 
-for(h in 1:length(data_HVR$File.ID) ){
-     print(h)
-     if( (grepl("REV", data_HVR$File.ID[h]) ==TRUE ), append(REV_FileNames, data_HVR$File.ID[h]) )
-}
+#save this list and use it to not add "REV" to when processing BD data
 
 
 rm(data_HVR)
 rm(data_HRV_P0)
 
 data_HVR_full 
+#HVR df with F2 and P0s measures, File.ID columns are used for merging/matching to 
+#BD MLH1 data in next step (nonrv list)
 
-HVR_PWD <- data_HVR_full[data_HVR_full$Cross == "PWD", ]
-
-
-HRV_P0$File.ID <- ifelse( grepl("REV", HVR_PWD$File.ID), "",
-) ) ) 
 
 #LOAD BD data
 #
@@ -66,14 +64,32 @@ BDdata_F2$ANIMAL_ID <- as.factor(BDdata_F2$ANIMAL_ID)
 BDdata_P0 = read.csv("C:/Users/alpeterson7/Documents/HannahVR/BD_MLH1_CASTxPWD_P0.csv", header=TRUE)
 BD_MLH1_data = rbind(BDdata_F2, BDdata_P0)
 
+#change CXPF2 to F2 OR viceversa
+
 mlh1 <- BD_MLH1_data[BD_MLH1_data$Cross == "CxPF2", ]
 mean(mlh1$nMLH1_foci )
 
 
+#create file name col for mating with HVR data
 BD_MLH1_data$file_name <- do.call(paste, c(BD_MLH1_data[c("ANIMAL_ID", "Slide_ID", "CellNumber")], sep = "_")) 
 
-BD_MLH1_data$file_name <- paste(BD_MLH1_data$file_name, "_REV.tif", sep="")
+#added (REV) ending to file names unless it is in the nonrv list
 
+REV <- subset(BD_MLH1_data$file_name, !(BD_MLH1_data$file_name %in% nonrv) ) #this returns a matrix of T OR F
+
+
+BD_MLH1_data$file_name <- paste(BD_MLH1_data[!(BD_MLH1_data$file_name %in% nonrv)]$file_name, "_REV.tif", sep="")
+
+data_HVR_full$File.ID[!grepl("REV", data_HVR_full$File.ID)]
+
+BD_MLH1_data$file_name <- paste( (BD_MLH1_data$ANIMAL_ID[!(BD_MLH1_data$file_name %in% nonrv)] ), "_REV.tif", sep="")
+
+#non rv pieces have '.tif' this won't match anything
+
+list <- BD_MLH1_data$ANIMAL_ID[!(BD_MLH1_data$ANIMAL_ID %in% nonrv)]  #this gives correct numbers
+
+
+BD_MLH1_data <- subset(BD_MLH1_data, select = -c(file_name) )#$FractDistFromCent, RawDistFromCent
 
 #don't think these kept PWD and CAST
 #TODO for merge file, make sure cross categories are consistent, make sure file names are correct
