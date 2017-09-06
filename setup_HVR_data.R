@@ -34,11 +34,30 @@ CO3s <- ddply(data_HVR_P0, .(File.ID), summarize,
 CO3s
 
 #push CO3s into P0 dataframe
-
-#mact
 data_HVR_P0$n3CO = CO3s
 
+data_HVR_P0$n3CO  
+new <- CO3s$n3CO[ match( CO3s$File.ID, data_HVR_P0$File.ID)] #this doesn't translate to image specific
+#above gives a list for mice, not images... need to figure out how to translate
+
 #(xu <- x[!duplicated(x)])
+
+for(j in 1: length(data_HVR_P0$File.ID)){
+  #if File.ID matches 
+  if (  match( CO3s$File.ID[j], data_HVR_P0$File.ID[j]) == TRUE ){
+    data_HVR_P0$n3CO[j] = CO3s$n3CO[j]
+  }
+}
+
+
+for(j in 1:length(data_HVR_P0$File.ID)){
+ # data_HVR_P0$n3CO[j] = CO3s$n3CO[ match( CO3s$File.ID, data_HVR_P0$File.ID[j])]
+  data_HVR_P0$n3CO[j] = CO3s[data_HVR_P0$File.ID[j] %in% CO3s$File.ID]$n3CO
+}
+
+data_HVR_P0$n3CO   <- CO3s$n3CO[which(data_HVR_P0$File.ID %in% CO3s$File.ID)]#this is giving counts for CAST
+
+
 
 
 #HVR full data set
