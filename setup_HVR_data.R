@@ -35,21 +35,8 @@ for(h in 1:length(data_HVR_full$File.ID)){
 }
 
 #push CO3s into P0 dataframe
-data_HVR_P0$n3CO = CO3s
-
-data_HVR_P0$n3CO  
-ww <- CO3s$n3CO[ match( CO3s$File.ID, data_HVR_P0$File.ID)] #this doesn't translate to image specific
-#above gives a list for mice, not images... need to figure out how to translate
 
 #(xu <- x[!duplicated(x)])
-
-for(j in 1: length(data_HVR_P0$File.ID)){
-  #if File.ID matches 
-  if (  match( CO3s$File.ID[j], data_HVR_P0$File.ID[j]) == TRUE ){
-    data_HVR_P0$n3CO[j] = CO3s$n3CO[j]
-  }
-}
-
 
 for(j in 1:length(data_HVR_P0$File.ID)){
  # data_HVR_P0$n3CO[j] = CO3s$n3CO[ match( CO3s$File.ID, data_HVR_P0$File.ID[j])]
@@ -57,9 +44,6 @@ for(j in 1:length(data_HVR_P0$File.ID)){
 }
 
 data_HVR_P0$n3CO   <- CO3s$n3CO[which(data_HVR_P0$File.ID %in% CO3s$File.ID)]#this is giving counts for CAST
-
-
-
 
 #HVR full data set
 data_HVR = read.csv("C:/Users/alpeterson7/Documents/HannahVR/HVR_IFD_DATA_Aug17.csv", header=TRUE)
@@ -73,9 +57,7 @@ colnames(data_HVR) <- c("File.ID", "Cross", "Animal.ID",
                         "Cell.Count", "n3CO", "Biv.ID", "IFD")
 
 #find file.ID which don't have REV.tif, put into a list
-
 data_HVR_full <- rbind(data_HRV_P0, data_HVR)
-
 
 ##I don't know why this isn't working 
 data_HVR_full$File.ID <- as.character(data_HVR_full$File.ID)
@@ -86,12 +68,9 @@ nonrv <- unique(nonrv)
 nonrv <- gsub('.tif', '', nonrv)#remove '.tif' for better matching
 
 #save this list and use it to not add "REV" to when processing BD data
-
-
 rm(data_HVR)
 rm(data_HRV_P0)
 
-data_HVR_full 
 #HVR df with F2 and P0s measures, File.ID columns are used for merging/matching to 
 #BD MLH1 data in next step (nonrv list)
 
@@ -122,7 +101,6 @@ length(REV)#same length as full dataframe
 BD_MLH1_data$file_name <- paste( (BD_MLH1_data$file_name[!(BD_MLH1_data$file_name %in% nonrv)]) , "_REV.tif", sep="")
 
 #BD_MLH1_data <- subset(BD_MLH1_data, select = -c(file_name) )#$FractDistFromCent, RawDistFromCent
-
 #TODO for merge file, make sure cross categories are consistent, make sure file names are correct
 mergd_file_name <- merge.data.frame(BD_MLH1_data, data_HVR_full, by.y = "File.ID", by.x = "file_name", all=FALSE)
 
@@ -138,6 +116,14 @@ rm(BDdata_P0, BDdata_F2)
 
 #correctly merging BD' MLH1 data to HVR IFD data
 # - remove cells from BD data not in HVR data
+
+
+for(j in 1:length(mergd_file_name$File.ID)){
+  # data_HVR_P0$n3CO[j] = CO3s$n3CO[ match( CO3s$File.ID, data_HVR_P0$File.ID[j])]
+  data_HVR_P0$n3CO[j] = CO3s[data_HVR_P0$File.ID[j] %in% CO3s$File.ID]$n3CO
+}
+
+
 
 data_PWD <- mergd_file_name[mergd_file_name$Cross.x == "PWD", ] #the file names for many PWD don't match
 data_CAST <- mergd_file_name[mergd_file_name$Cross.x == "CAST", ]
