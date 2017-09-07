@@ -1,8 +1,10 @@
 ## data setup script
 ## input: HVR data files (Excel), BD's Excel scripts
 ## output: R dataframe with HVR IFD data and BD' MLH1 data
+library(plyr)
+#data_HVR_P0 = read.csv("C:/Users/alpeterson7/Documents/HannahVR/HVR_IFD_P0.csv", header=TRUE)
 
-data_HVR_P0 = read.csv("C:/Users/alpeterson7/Documents/HannahVR/HVR_IFD_P0.csv", header=TRUE)
+load("HVR_data_setup.RData")
 
 #add REV.tif to end of file name for CAST
 #CAST add '.tif'
@@ -11,8 +13,6 @@ data_HVR_P0 = read.csv("C:/Users/alpeterson7/Documents/HannahVR/HVR_IFD_P0.csv",
 data_HVR_P0$File.ID <- ifelse( grepl("CAST", data_HVR_P0$File.ID), paste(data_HVR_P0$File.ID, ".tif", sep=""),
                 ifelse(grepl("PWD", data_HVR_P0$File.ID), substring(data_HVR_P0$File.ID, 4), 
                 ifelse(grepl("CXP", data_HVR_P0$File.ID), substring(data_HVR_P0$File.ID, 4), "" ) ) )     
-
-
 
 colnames(data_HVR_P0) <- c("File.ID", "Cross", "Animal.ID", 
                            "Cell.Count", "n3CO", "Biv.ID", "IFD")
@@ -23,21 +23,22 @@ for(i in 1:length(data_HVR_P0$File.ID)){
   data_HVR_P0$Animal.ID[i] = mouse_list[1] 
 }
 
-#add 3CO data to n3CO col
-CO3s <- ddply(data_HVR_P0, .(File.ID), summarize,
-                #if Biv.ID is duplicated, 3CO.. if there is a Biv.ID that isn't unique... count as a 3CO
-    #if max and length differ, that indicates there is a 3CO 
-                max = max(Biv.ID),
-                measures = length(Biv.ID),
-                n3CO = measures-max
-)
-CO3s
+#this marks 3CO biv (one of the biv measures), as a 3CO with a "1", else everything is NA
+for(h in 1:length(data_HVR_full$File.ID)){
+  #if col 6 of 7 match and 7th(IFD doesn't ) 3CO  
+  if( (data_HVR_full$File.ID[h] == data_HVR_full$File.ID[h+1]  ) &&      
+      (data_HVR_full$Biv.ID[h]==data_HVR_full$Biv.ID[h+1] ) ){
+    print(c("double ", h) )
+    data_HVR_full$n3CO[h] = 1
+  }
+  
+}
 
 #push CO3s into P0 dataframe
 data_HVR_P0$n3CO = CO3s
 
 data_HVR_P0$n3CO  
-new <- CO3s$n3CO[ match( CO3s$File.ID, data_HVR_P0$File.ID)] #this doesn't translate to image specific
+ww <- CO3s$n3CO[ match( CO3s$File.ID, data_HVR_P0$File.ID)] #this doesn't translate to image specific
 #above gives a list for mice, not images... need to figure out how to translate
 
 #(xu <- x[!duplicated(x)])

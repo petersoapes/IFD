@@ -12,7 +12,7 @@ how consistant is this for mice? / how variable is this across P0s?
 #############
 library(dplyr)
 library(plyr)
-setwd("C:/Users/alpeterson7/Documents/HannahVR/HVRrepo/")
+setwd("C:/Users/alpeterson7/Documents/HannahVR/HVRrepo/")#this won't work for everything on git
 load(file="HVR_data_setup.RData")
 
 
