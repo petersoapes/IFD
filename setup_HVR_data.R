@@ -1,8 +1,10 @@
 ## data setup script
 ## input: HVR data files (Excel), BD's Excel scripts
 ## output: R dataframe with HVR IFD data and BD' MLH1 data
+library(plyr)
+#data_HVR_P0 = read.csv("C:/Users/alpeterson7/Documents/HannahVR/HVR_IFD_P0.csv", header=TRUE)
 
-data_HVR_P0 = read.csv("C:/Users/alpeterson7/Documents/HannahVR/HVR_IFD_P0.csv", header=TRUE)
+load("HVR_data_setup.RData")
 
 #add REV.tif to end of file name for CAST
 #CAST add '.tif'
@@ -11,8 +13,6 @@ data_HVR_P0 = read.csv("C:/Users/alpeterson7/Documents/HannahVR/HVR_IFD_P0.csv",
 data_HVR_P0$File.ID <- ifelse( grepl("CAST", data_HVR_P0$File.ID), paste(data_HVR_P0$File.ID, ".tif", sep=""),
                 ifelse(grepl("PWD", data_HVR_P0$File.ID), substring(data_HVR_P0$File.ID, 4), 
                 ifelse(grepl("CXP", data_HVR_P0$File.ID), substring(data_HVR_P0$File.ID, 4), "" ) ) )     
-
-
 
 colnames(data_HVR_P0) <- c("File.ID", "Cross", "Animal.ID", 
                            "Cell.Count", "n3CO", "Biv.ID", "IFD")
@@ -23,32 +23,20 @@ for(i in 1:length(data_HVR_P0$File.ID)){
   data_HVR_P0$Animal.ID[i] = mouse_list[1] 
 }
 
-#add 3CO data to n3CO col
-CO3s <- ddply(data_HVR_P0, .(File.ID), summarize,
-                #if Biv.ID is duplicated, 3CO.. if there is a Biv.ID that isn't unique... count as a 3CO
-    #if max and length differ, that indicates there is a 3CO 
-                max = max(Biv.ID),
-                measures = length(Biv.ID),
-                n3CO = measures-max
-)
-CO3s
-
-#push CO3s into P0 dataframe
-data_HVR_P0$n3CO = CO3s
-
-data_HVR_P0$n3CO  
-new <- CO3s$n3CO[ match( CO3s$File.ID, data_HVR_P0$File.ID)] #this doesn't translate to image specific
-#above gives a list for mice, not images... need to figure out how to translate
-
-#(xu <- x[!duplicated(x)])
-
-for(j in 1: length(data_HVR_P0$File.ID)){
-  #if File.ID matches 
-  if (  match( CO3s$File.ID[j], data_HVR_P0$File.ID[j]) == TRUE ){
-    data_HVR_P0$n3CO[j] = CO3s$n3CO[j]
+#this marks 3CO biv (one of the biv measures), as a 3CO with a "1", else everything is NA
+for(h in 1:length(data_HVR_full$File.ID)){
+  #if col 6 of 7 match and 7th(IFD doesn't ) 3CO  
+  if( (data_HVR_full$File.ID[h] == data_HVR_full$File.ID[h+1]  ) &&      
+      (data_HVR_full$Biv.ID[h]==data_HVR_full$Biv.ID[h+1] ) ){
+    print(c("double ", h) )
+    data_HVR_full$n3CO[h] = 1
   }
+  
 }
 
+#push CO3s into P0 dataframe
+
+#(xu <- x[!duplicated(x)])
 
 for(j in 1:length(data_HVR_P0$File.ID)){
  # data_HVR_P0$n3CO[j] = CO3s$n3CO[ match( CO3s$File.ID, data_HVR_P0$File.ID[j])]
@@ -56,9 +44,6 @@ for(j in 1:length(data_HVR_P0$File.ID)){
 }
 
 data_HVR_P0$n3CO   <- CO3s$n3CO[which(data_HVR_P0$File.ID %in% CO3s$File.ID)]#this is giving counts for CAST
-
-
-
 
 #HVR full data set
 data_HVR = read.csv("C:/Users/alpeterson7/Documents/HannahVR/HVR_IFD_DATA_Aug17.csv", header=TRUE)
@@ -72,9 +57,7 @@ colnames(data_HVR) <- c("File.ID", "Cross", "Animal.ID",
                         "Cell.Count", "n3CO", "Biv.ID", "IFD")
 
 #find file.ID which don't have REV.tif, put into a list
-
 data_HVR_full <- rbind(data_HRV_P0, data_HVR)
-
 
 ##I don't know why this isn't working 
 data_HVR_full$File.ID <- as.character(data_HVR_full$File.ID)
@@ -85,12 +68,9 @@ nonrv <- unique(nonrv)
 nonrv <- gsub('.tif', '', nonrv)#remove '.tif' for better matching
 
 #save this list and use it to not add "REV" to when processing BD data
-
-
 rm(data_HVR)
 rm(data_HRV_P0)
 
-data_HVR_full 
 #HVR df with F2 and P0s measures, File.ID columns are used for merging/matching to 
 #BD MLH1 data in next step (nonrv list)
 
@@ -121,7 +101,6 @@ length(REV)#same length as full dataframe
 BD_MLH1_data$file_name <- paste( (BD_MLH1_data$file_name[!(BD_MLH1_data$file_name %in% nonrv)]) , "_REV.tif", sep="")
 
 #BD_MLH1_data <- subset(BD_MLH1_data, select = -c(file_name) )#$FractDistFromCent, RawDistFromCent
-
 #TODO for merge file, make sure cross categories are consistent, make sure file names are correct
 mergd_file_name <- merge.data.frame(BD_MLH1_data, data_HVR_full, by.y = "File.ID", by.x = "file_name", all=FALSE)
 
@@ -137,6 +116,14 @@ rm(BDdata_P0, BDdata_F2)
 
 #correctly merging BD' MLH1 data to HVR IFD data
 # - remove cells from BD data not in HVR data
+
+
+for(j in 1:length(mergd_file_name$File.ID)){
+  # data_HVR_P0$n3CO[j] = CO3s$n3CO[ match( CO3s$File.ID, data_HVR_P0$File.ID[j])]
+  data_HVR_P0$n3CO[j] = CO3s[data_HVR_P0$File.ID[j] %in% CO3s$File.ID]$n3CO
+}
+
+
 
 data_PWD <- mergd_file_name[mergd_file_name$Cross.x == "PWD", ] #the file names for many PWD don't match
 data_CAST <- mergd_file_name[mergd_file_name$Cross.x == "CAST", ]
