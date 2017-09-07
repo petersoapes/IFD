@@ -57,6 +57,8 @@ PWD_image_averages <- ddply(data_PWD, .(File.ID), summarize,
 )
 PWD_image_averages
 
+#plot(PWD_image_averages$)
+
 PWD_mouse <- ddply(PWD_image_averages, .(mouse), summarize,
                  
                   avIFD = mean(xbar_IFD),
@@ -84,10 +86,13 @@ F2_image_averages <- ddply(F2, .(File.ID), summarize,
                             ncells = length(unique(File.ID)),
                             n3CO = sum(n3CO, na.rm=TRUE),
                             nIFDs = length(IFD),
-                            n2CO = nIFDs - n3CO,
+                            n2CO = abs(nIFDs - n3CO),
                             n1CO = 19 - (n3CO+n2CO)                    
 )
 F2_image_averages
+
+F2_image_averages <- subset(F2_image_averages, mouse != "3030")
+plot(F2_image_averages$xbar_IFD, F2_image_averages$n2CO)
 
 F2_mouse <- ddply(F2_image_averages, .(mouse), summarize,
                    
@@ -103,6 +108,10 @@ F2_mouse <- ddply(F2_image_averages, .(mouse), summarize,
 )
 F2_mouse
 
+F2mm <- subset(F2_mouse, mouse != "3030")
+
+plot(F2mm$avIFD, F2mm$p2CO)
+plot(F2mm$avIFD, F2mm$p3CO)
 
 CAST_image_averages <- ddply(data_CAST, .(file_name), summarize,
                             nIFD_measures = length(IFD),
