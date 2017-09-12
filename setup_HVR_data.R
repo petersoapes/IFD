@@ -1,10 +1,12 @@
 ## data setup script
 ## input: HVR data files (Excel), BD's Excel scripts
 ## output: R dataframe with HVR IFD data and BD' MLH1 data
+
+
 library(plyr)
 #data_HVR_P0 = read.csv("C:/Users/alpeterson7/Documents/HannahVR/HVR_IFD_P0.csv", header=TRUE)
 
-load("HVR_data_setup.RData")
+#load("HVR_data_setup.RData")
 
 #add REV.tif to end of file name for CAST
 #CAST add '.tif'
