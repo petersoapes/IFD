@@ -1,0 +1,74 @@
+---
+title: "Analysis"
+author: "April"
+date: "September 7, 2017"
+output: rmarkdown::github_document
+---
+
+This is a practice document for gitmd for the IFD repo.
+TODO
+Link this with the Setup data environment to create plots/figures to put in this rm file.
+Change to gitmd output
+
+#load data
+#make a plot
+
+```{r, setting up envr} 
+#make this block silent
+library(plyr)
+library(ggplot2)
+library(gridExtra)
+library(pwr)
+library(dplyr)
+
+setwd("C:/Users/alpeterson7/Documents/HannahVR/HVRrepo")
+data<- load("HVR_data_setup.RData")
+
+new.data <- mergd_file_name %>% filter(!(IFD > 1000) )
+
+```
+
+## Header1, Summary of Interfocal Distances from a F2 Cross
+
+
+#### Initial Stats
+
+
+mouse specific tables to be used in plots. I should be able to add BD's data.
+```{r, tables}
+#mouse summary stats observations for each class
+image_data <- ddply(new.data, .(file_name), summarize,
+                        N_IFD = length(IFD),
+                        ncells = max(Cell.Count),
+                        prcnt_2CO = N_IFD / (ncells*19)
+            #number of cells / number of IFDs = proxy for proportion of 2COs            
+                        
+)
+
+mouse_data <- ddply(new.data, .(Animal.ID), summarize,
+                        N_IFD = length(IFD),
+                        ncells = max(Cell.Count),
+                        prcnt_2CO = N_IFD / (ncells*19)
+            #number of cells / number of IFDs = proxy for proportion of 2COs            
+                        
+)
+#mouse_data the mouse data is displayed in a very long table
+```
+
+* histogram of IFD
+```{r, histIFD}
+#make sure outliers are removes
+hist(new.data$IFD)#adjust the axis names
+
+hist(new.data$nMLH1_foci)
+```
+The histogram appears normally distributed, but with a slight right tail.
+
+#### Things to look at
+* proportion of CO classes (per mouse)
+* range of proportion classes
+* mean and variation of IFD
+
+* min value per F2 mouse
+* normalized IFD **
+* relationsihp of total SC and CO number
