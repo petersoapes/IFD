@@ -2,7 +2,7 @@
 title: "Analysis"
 author: "April"
 date: "September 7, 2017"
-output: rmarkdown::github_document
+output: github_document
 ---
 
 This is a practice document for gitmd for the IFD repo.
