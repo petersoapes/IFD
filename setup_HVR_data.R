@@ -70,8 +70,8 @@ nonrv <- unique(nonrv)
 nonrv <- gsub('.tif', '', nonrv)#remove '.tif' for better matching
 
 #save this list and use it to not add "REV" to when processing BD data
-rm(data_HVR)
-rm(data_HRV_P0)
+#rm(data_HVR)
+#rm(data_HRV_P0)
 
 #HVR df with F2 and P0s measures, File.ID columns are used for merging/matching to 
 #BD MLH1 data in next step (nonrv list)
@@ -130,6 +130,13 @@ for(j in 1:length(mergd_file_name$File.ID)){
 data_PWD <- mergd_file_name[mergd_file_name$Cross.x == "PWD", ] #the file names for many PWD don't match
 data_CAST <- mergd_file_name[mergd_file_name$Cross.x == "CAST", ]
 data_F2 <- mergd_file_name[mergd_file_name$Cross.x == "CxPF2", ]
+
+#remove outliers
+#mergd_file_name <- mergd_file_name[mergd_file_name$IFD != max(mergd_file_name$IFD)]
+
+mergd_file_name <- mergd_file_name %>% filter(!(IFD > 1000) )#currently are 2 outliers
+
+
 
 #FINAL 
 ## save data
