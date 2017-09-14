@@ -5,50 +5,9 @@ September 7, 2017
 
 This is a practice document for gitmd for the IFD repo. TODO Link this with the Setup data environment to create plots/figures to put in this rm file. Change to gitmd output
 
-load data
-=========
+### load data
 
-make a plot
-===========
-
-``` r
-#make this block silent
-library(plyr)
-library(ggplot2)
-library(gridExtra)
-library(pwr)
-library(dplyr)
-```
-
-    ## 
-    ## Attaching package: 'dplyr'
-
-    ## The following object is masked from 'package:gridExtra':
-    ## 
-    ##     combine
-
-    ## The following objects are masked from 'package:plyr':
-    ## 
-    ##     arrange, count, desc, failwith, id, mutate, rename, summarise,
-    ##     summarize
-
-    ## The following objects are masked from 'package:stats':
-    ## 
-    ##     filter, lag
-
-    ## The following objects are masked from 'package:base':
-    ## 
-    ##     intersect, setdiff, setequal, union
-
-``` r
-setwd("C:/Users/alpeterson7/Documents/HannahVR/HVRrepo")
-data<- load("HVR_data_setup.RData")
-
-new.data <- mergd_file_name %>% filter(!(IFD > 1000) )
-```
-
-Header1, Summary of Interfocal Distances from a F2 Cross
---------------------------------------------------------
+### Header1, Summary of Interfocal Distances from a F2 Cross
 
 #### Initial Stats
 
@@ -74,24 +33,9 @@ mouse_data <- ddply(new.data, .(Animal.ID), summarize,
 #mouse_data the mouse data is displayed in a very long table
 ```
 
--   histogram of IFD
+-   histogram of IFD ![](Analysis_md_files/figure-markdown_github-ascii_identifiers/histIFD-1.png)![](Analysis_md_files/figure-markdown_github-ascii_identifiers/histIFD-2.png)
 
-``` r
-#make sure outliers are removes
-hh <- hist(new.data$IFD)#adjust the axis names
-```
-
-![](Analysis_md_files/figure-markdown_github-ascii_identifiers/histIFD-1.png)
-
-``` r
-gg <- hist(new.data$nMLH1_foci)
-```
-
-![](Analysis_md_files/figure-markdown_github-ascii_identifiers/histIFD-2.png)
-
-``` r
-hh
-```
+<!-- -->
 
     ## $breaks
     ##  [1]   0  10  20  30  40  50  60  70  80  90 100 110 120 130 140 150 160
@@ -119,10 +63,6 @@ hh
     ## 
     ## attr(,"class")
     ## [1] "histogram"
-
-``` r
-gg
-```
 
     ## $breaks
     ##  [1] 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37

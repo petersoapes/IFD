@@ -10,10 +10,9 @@ TODO
 Link this with the Setup data environment to create plots/figures to put in this rm file.
 Change to gitmd output
 
-#load data
-#make a plot
+### load data
 
-```{r, setting up envr} 
+```{r, setting, echo = FALSE, include=FALSE} 
 #make this block silent
 library(plyr)
 library(ggplot2)
@@ -25,10 +24,9 @@ setwd("C:/Users/alpeterson7/Documents/HannahVR/HVRrepo")
 data<- load("HVR_data_setup.RData")
 
 new.data <- mergd_file_name %>% filter(!(IFD > 1000) )
-
 ```
 
-## Header1, Summary of Interfocal Distances from a F2 Cross
+### Header1, Summary of Interfocal Distances from a F2 Cross
 
 
 #### Initial Stats
@@ -56,7 +54,7 @@ mouse_data <- ddply(new.data, .(Animal.ID), summarize,
 ```
 
 * histogram of IFD
-```{r, histIFD}
+```{r, histIFD, echo=FALSE}
 #make sure outliers are removes
 hh <- hist(new.data$IFD)#adjust the axis names
 

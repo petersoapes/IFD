@@ -1,10 +1,12 @@
 ## data setup script
-## input: HVR data files (Excel), BD's Excel scripts
+## input: HVR data files P0 and F2 sheets. Because data was 
+#collected at different stages, they are in a slightly different format. BD's Excel scripts.
 ## output: R dataframe with HVR IFD data and BD' MLH1 data
 
 
 library(plyr)
-#data_HVR_P0 = read.csv("C:/Users/alpeterson7/Documents/HannahVR/HVR_IFD_P0.csv", header=TRUE)
+
+data_HVR_P0 = read.csv("C:/Users/alpeterson7/Documents/HannahVR/HVR_IFD_P0.csv", header=TRUE)
 
 #load("HVR_data_setup.RData")
 
@@ -16,16 +18,39 @@ data_HVR_P0$File.ID <- ifelse( grepl("CAST", data_HVR_P0$File.ID), paste(data_HV
                 ifelse(grepl("PWD", data_HVR_P0$File.ID), substring(data_HVR_P0$File.ID, 4), 
                 ifelse(grepl("CXP", data_HVR_P0$File.ID), substring(data_HVR_P0$File.ID, 4), "" ) ) )     
 
+#this colnames, should be changed in the original google doc file.
 colnames(data_HVR_P0) <- c("File.ID", "Cross", "Animal.ID", 
                            "Cell.Count", "n3CO", "Biv.ID", "IFD")
 
-#add animal.id col
+#fill in animal.id cells
 for(i in 1:length(data_HVR_P0$File.ID)){
   mouse_list = strsplit(as.character(data_HVR_P0$File.ID[i]), split="_")[[1]]
   data_HVR_P0$Animal.ID[i] = mouse_list[1] 
 }
 
+
+#create HVR_full
+#HVR full data set
+data_HVR = read.csv("C:/Users/alpeterson7/Documents/HannahVR/HVR_IFD_DATA_Aug17.csv", header=TRUE)
+
+
+#seperate 2CO from 3CO
+#merge two data sets
+#remove some columns with -c()
+data_HVR <- subset(data_HVR, select = -c(Notes, Date.Collected, X, X.1, X.2, X.3, X.4, X.5, X.6) )
+
+colnames(data_HVR) <- c("File.ID", "Cross", "Animal.ID", 
+                        "Cell.Count", "n3CO", "Biv.ID", "IFD")
+
+#find file.ID which don't have REV.tif, put into a list
+data_HVR_full <- rbind(data_HVR_P0, data_HVR)
+
+#does cell count need to be filled in for P0s...?
+
+
+#fill in n3CO columns
 #this marks 3CO biv (one of the biv measures), as a 3CO with a "1", else everything is NA
+# this marks the first IFD measure as 3CO (with 1), maybe it should be a X for both IFD measures?
 for(h in 1:length(data_HVR_full$File.ID)){
   #if col 6 of 7 match and 7th(IFD doesn't ) 3CO  
   if( (data_HVR_full$File.ID[h] == data_HVR_full$File.ID[h+1]  ) &&      
@@ -36,46 +61,15 @@ for(h in 1:length(data_HVR_full$File.ID)){
   
 }
 
-#push CO3s into P0 dataframe
 
-#(xu <- x[!duplicated(x)])
-
-for(j in 1:length(data_HVR_P0$File.ID)){
- # data_HVR_P0$n3CO[j] = CO3s$n3CO[ match( CO3s$File.ID, data_HVR_P0$File.ID[j])]
-  data_HVR_P0$n3CO[j] = CO3s[data_HVR_P0$File.ID[j] %in% CO3s$File.ID]$n3CO
-}
-
-data_HVR_P0$n3CO   <- CO3s$n3CO[which(data_HVR_P0$File.ID %in% CO3s$File.ID)]#this is giving counts for CAST
-
-#HVR full data set
-data_HVR = read.csv("C:/Users/alpeterson7/Documents/HannahVR/HVR_IFD_DATA_Aug17.csv", header=TRUE)
-#seperate 2CO from 3CO
-
-#merge two data sets
-#remove some columns with -c()
-data_HVR <- subset(data_HVR, select = -c(Notes, Date.Collected, X, X.1, X.2, X.3, X.4, X.5, X.6) )
-
-colnames(data_HVR) <- c("File.ID", "Cross", "Animal.ID", 
-                        "Cell.Count", "n3CO", "Biv.ID", "IFD")
-
-#find file.ID which don't have REV.tif, put into a list
-data_HVR_full <- rbind(data_HRV_P0, data_HVR)
-
-##I don't know why this isn't working 
-data_HVR_full$File.ID <- as.character(data_HVR_full$File.ID)
+# there are a subset of PWD file names which don't have REV. 
+# Correctly add REV to image names so that file name is correct 
+# .tif added at later steps
 
 #find file names that don't contain REV
 nonrv <- data_HVR_full$File.ID[!grepl("REV", data_HVR_full$File.ID)]
 nonrv <- unique(nonrv)
 nonrv <- gsub('.tif', '', nonrv)#remove '.tif' for better matching
-
-#save this list and use it to not add "REV" to when processing BD data
-#rm(data_HVR)
-#rm(data_HRV_P0)
-
-#HVR df with F2 and P0s measures, File.ID columns are used for merging/matching to 
-#BD MLH1 data in next step (nonrv list)
-
 
 #LOAD BD data
 
@@ -85,13 +79,18 @@ BDdata_F2$ANIMAL_ID <- as.factor(BDdata_F2$ANIMAL_ID)
 BDdata_P0 = read.csv("C:/Users/alpeterson7/Documents/HannahVR/BD_MLH1_CASTxPWD_P0.csv", header=TRUE)
 BD_MLH1_data = rbind(BDdata_F2, BDdata_P0)
 
+
+#HVR df with F2 and P0s measures, File.ID columns are used for merging/matching to 
+#BD MLH1 data in next step (nonrv list)
+
+
 #change CXPF2 to F2 OR viceversa
 
 #mlh1 <- BD_MLH1_data[BD_MLH1_data$Cross == "CxPF2", ]
 #mean(mlh1$nMLH1_foci )
 
 
-#create file name col for mating with HVR data
+#create file name col for merging with HVR data
 BD_MLH1_data$file_name <- do.call(paste, c(BD_MLH1_data[c("ANIMAL_ID", "Slide_ID", "CellNumber")], sep = "_")) 
 
 BD_MLH1_data$file_name <- do.call(paste, c(BD_MLH1_data[c("ANIMAL_ID", "Slide_ID", "CellNumber")], sep = "_"))
@@ -142,3 +141,8 @@ mergd_file_name <- mergd_file_name %>% filter(!(IFD > 1000) )#currently are 2 ou
 ## save data
 setwd("C:/Users/alpeterson7/Documents/HannahVR/HVRrepo/")
 save.image("HVR_data_setup.RData")
+
+# CLEAN UP
+#save this list and use it to not add "REV" to when processing BD data
+#rm(data_HVR)
+#rm(data_HRV_P0)
