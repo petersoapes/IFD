@@ -8,8 +8,6 @@ library(plyr)
 
 data_HVR_P0 = read.csv("C:/Users/alpeterson7/Documents/HannahVR/HVR_IFD_P0.csv", header=TRUE)
 
-#load("HVR_data_setup.RData")
-
 #add REV.tif to end of file name for CAST
 #CAST add '.tif'
 #PWD, remove 'PWD' from begining these files dont have rev
@@ -19,7 +17,7 @@ data_HVR_P0$File.ID <- ifelse( grepl("CAST", data_HVR_P0$File.ID), paste(data_HV
                 ifelse(grepl("CXP", data_HVR_P0$File.ID), substring(data_HVR_P0$File.ID, 4), "" ) ) )     
 
 #this colnames, should be changed in the original google doc file.
-colnames(data_HVR_P0) <- c("File.ID", "Cross", "Animal.ID", 
+colnames(data_HVR_P0) <- c( "File.ID","Cross","Animal.ID", 
                            "Cell.Count", "n3CO", "Biv.ID", "IFD")
 
 #fill in animal.id cells
@@ -28,17 +26,14 @@ for(i in 1:length(data_HVR_P0$File.ID)){
   data_HVR_P0$Animal.ID[i] = mouse_list[1] 
 }
 
-
 #create HVR_full
 #HVR full data set
-data_HVR = read.csv("C:/Users/alpeterson7/Documents/HannahVR/HVR_IFD_DATA_Aug17.csv", header=TRUE)
-
+data_HVR = read.csv("C:/Users/alpeterson7/Documents/HannahVR/HVR_IFD_DATA_Sep17.csv", header=TRUE)
 
 #seperate 2CO from 3CO
 #merge two data sets
 #remove some columns with -c()
-data_HVR <- subset(data_HVR, select = -c(Notes, Date.Collected, X, X.1, X.2, X.3, X.4, X.5, X.6) )
-
+data_HVR <- subset(data_HVR, select = -c(Notes, Date.Collected) )
 colnames(data_HVR) <- c("File.ID", "Cross", "Animal.ID", 
                         "Cell.Count", "n3CO", "Biv.ID", "IFD")
 
@@ -46,8 +41,6 @@ colnames(data_HVR) <- c("File.ID", "Cross", "Animal.ID",
 data_HVR_full <- rbind(data_HVR_P0, data_HVR)
 
 #does cell count need to be filled in for P0s...?
-
-
 #fill in n3CO columns
 #this marks 3CO biv (one of the biv measures), as a 3CO with a "1", else everything is NA
 # this marks the first IFD measure as 3CO (with 1), maybe it should be a X for both IFD measures?
@@ -58,27 +51,39 @@ for(h in 1:length(data_HVR_full$File.ID)){
     print(c("double ", h) )
     data_HVR_full$n3CO[h] = 1
   }
-  
 }
-
 
 # there are a subset of PWD file names which don't have REV. 
 # Correctly add REV to image names so that file name is correct 
 # .tif added at later steps
-
-#find file names that don't contain REV
+#find file names that don't contain REV..I don't know if this is actually useful
 nonrv <- data_HVR_full$File.ID[!grepl("REV", data_HVR_full$File.ID)]
-nonrv <- unique(nonrv)
+nonrv <- unique(nonrv) #42 biv measures without REV
 nonrv <- gsub('.tif', '', nonrv)#remove '.tif' for better matching
 
-#LOAD BD data
-
+#LOAD BD data (why did I have two seperate files for BD data)
 BDdata_F2 = read.csv("C:/Users/alpeterson7/Documents/HannahVR/BD_F2_RecombinationPhenotypes.csv", header=TRUE)
 BDdata_F2$ANIMAL_ID <- as.factor(BDdata_F2$ANIMAL_ID)
 #seprate by mouse, calculate average within mouse var  and average between mouse var
 BDdata_P0 = read.csv("C:/Users/alpeterson7/Documents/HannahVR/BD_MLH1_CASTxPWD_P0.csv", header=TRUE)
 BD_MLH1_data = rbind(BDdata_F2, BDdata_P0)
 
+#create file name col for merging with HVR data
+BD_MLH1_data$file_name <- do.call(paste, c(BD_MLH1_data[c("ANIMAL_ID", "Slide_ID", "CellNumber")], sep = "_")) 
+
+#don't know if this is working
+REV <- subset(BD_MLH1_data$file_name, !(BD_MLH1_data$file_name %in% nonrv) ) #this returns a matrix of T OR F
+length(REV)#same length as full dataframe
+#IT seems like my versions of BD's data don't have the nonREV data... most 'file names should match (ie are useful for merging)
+
+#can't find the mice, (2144 and 2146 in BD's df)
+BD_MLH1_data$file_name <- paste( (BD_MLH1_data$file_name[!(BD_MLH1_data$file_name %in% nonrv)]) , "_REV.tif", sep="")
+
+#BD_MLH1_data <- subset(BD_MLH1_data, select = -c(file_name) )#$FractDistFromCent, RawDistFromCent
+#TODO for merge file, make sure cross categories are consistent, make sure file names are correct
+IFD_nMLH1 <- merge.data.frame(BD_MLH1_data, data_HVR_full, by.y = "File.ID", by.x = "file_name", all=FALSE)
+
+#rm(BDdata_P0, BDdata_F2)
 
 #HVR df with F2 and P0s measures, File.ID columns are used for merging/matching to 
 #BD MLH1 data in next step (nonrv list)
@@ -90,22 +95,6 @@ BD_MLH1_data = rbind(BDdata_F2, BDdata_P0)
 #mean(mlh1$nMLH1_foci )
 
 
-#create file name col for merging with HVR data
-BD_MLH1_data$file_name <- do.call(paste, c(BD_MLH1_data[c("ANIMAL_ID", "Slide_ID", "CellNumber")], sep = "_")) 
-
-BD_MLH1_data$file_name <- do.call(paste, c(BD_MLH1_data[c("ANIMAL_ID", "Slide_ID", "CellNumber")], sep = "_"))
-
-REV <- subset(BD_MLH1_data$file_name, !(BD_MLH1_data$file_name %in% nonrv) ) #this returns a matrix of T OR F
-length(REV)#same length as full dataframe
-#IT seems like my versions of BD's data don't have the nonREV data... most 'file names should match (ie are useful for mergeing)
-
-BD_MLH1_data$file_name <- paste( (BD_MLH1_data$file_name[!(BD_MLH1_data$file_name %in% nonrv)]) , "_REV.tif", sep="")
-
-#BD_MLH1_data <- subset(BD_MLH1_data, select = -c(file_name) )#$FractDistFromCent, RawDistFromCent
-#TODO for merge file, make sure cross categories are consistent, make sure file names are correct
-mergd_file_name <- merge.data.frame(BD_MLH1_data, data_HVR_full, by.y = "File.ID", by.x = "file_name", all=FALSE)
-
-rm(BDdata_P0, BDdata_F2)
 
 #HVR length(data_HVR_full$File.ID), 7485
 #BD length(BD_MLH1_data$file_name)
