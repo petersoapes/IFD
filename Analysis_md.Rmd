@@ -58,9 +58,11 @@ mouse_data <- ddply(new.data, .(Animal.ID), summarize,
 * histogram of IFD
 ```{r, histIFD}
 #make sure outliers are removes
-hist(new.data$IFD)#adjust the axis names
+hh <- hist(new.data$IFD)#adjust the axis names
 
-hist(new.data$nMLH1_foci)
+gg <- hist(new.data$nMLH1_foci)
+hh
+gg
 ```
 The histogram appears normally distributed, but with a slight right tail.
 
