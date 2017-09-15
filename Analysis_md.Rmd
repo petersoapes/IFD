@@ -24,8 +24,9 @@ data<- load("HVR_data_setup.RData")
 
 ```
 
-### Header1, Summary of Interfocal Distances from a F2 Cross
+### Summary of Interfocal Distances from a F2 Cross
 
+discription of the data and purpose of Analysis. BD data of MLH1 measures in meiotice cells. HVR measures of inter-focal distances of foci on the same bivalent. 
 
 #### Initial Stats
 - number of mice used
@@ -69,21 +70,18 @@ The histogram appears normally distributed, but with a slight right tail.
 * proportion of CO classes (per mouse)
 * range of proportion classes
 * mean and variation of IFD
-
 * min value per F2 mouse
 * normalized IFD **
 * relationsihp of total SC and CO number
 
 
-Examining/Comparing 
-These F2's were geenrated to compared the average CO number per cell across two HM subspecies. Comparing the the average propotions of bivalent types (1CO, 2CO ect) per cell breaks down that phenotype one more level.
+These F2's were genrated to compared the average CO number per cell across two HM subspecies. Comparing the the average propotions of bivalent types (1CO, 2CO ect) per cell breaks down that phenotype one more level.
 Approach; BD data, She filled out the proportions.
 
-HVR data (should match BD)
+Since measuring the proportion of object classes from HVR's data would require the assumption that there are no 0COs, (which is not true), Useing BD's data will be more acurate. 
+But the general approach of quantifying CO proportions from HVR data would be something like... 19 - ( length(IFD) - n3CO*2).
 ```{r, class_proportions}
-
-
-mouseBivClass_proportions <- ddply(BD_data, .(ANIMAL_ID), summarize,
+BDmouseBivClass_proportions <- ddply(BD_data, .(ANIMAL_ID), summarize,
                    #  Cross = as.factor(Cross),
                     nChr = mean(nChr),
                    nCells = length(nMLH1_foci),
@@ -93,6 +91,17 @@ mouseBivClass_proportions <- ddply(BD_data, .(ANIMAL_ID), summarize,
                      biv3CO =  mean( (as.numeric(nChrWith3.XO) ) )/ nCells 
 )
 #increase the denominator to nCells * 19
+# should the proportions be compared to the MLH1 number?
 
+# match these mice to the mice in IFD_MLH1, 
 
+```
+
+#### range and distribution of IFD measures.
+```{r, IFD plots}
+
+#IFD_bxplt <- boxplot((IFD_nMLH1$ANIMAL_ID), IFD_nMLH1$IFD, main= "IFD distributions")
+#use ggplot
+
+#IFD_bxplt
 ```
