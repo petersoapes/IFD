@@ -64,18 +64,18 @@ nonrv <- gsub('.tif', '', nonrv)#remove '.tif' for better matching
 #LOAD BD data (why did I have two seperate files for BD data)
 
 BD_data = read.csv("C:/Users/alpeterson7/Documents/HannahVR/BD_RecombinationPhenotypes.csv", header=TRUE)
+#there are only 10 PWD in this excel sheet, but 17 PWD mouse folders on lacie. First 7folders don't contain 'REV'
+#suffix.
 #remove all strains but PWD, CAST and CXP PXC, PxCF2, PxCF1, WSBxCASTF1, CxPF1, CxPF2
 
-
-BDdata_F2 = read.csv("C:/Users/alpeterson7/Documents/HannahVR/BD_F2_RecombinationPhenotypes.csv", header=TRUE)
-BDdata_F2$ANIMAL_ID <- as.factor(BDdata_F2$ANIMAL_ID)
-#seprate by mouse, calculate average within mouse var  and average between mouse var
-BDdata_P0 = read.csv("C:/Users/alpeterson7/Documents/HannahVR/BD_MLH1_CASTxPWD_P0.csv", header=TRUE)
-BD_MLH1_data = rbind(BDdata_F2, BDdata_P0)
-#it seems like ~the first 7 PWD mice aren't in BD's master phenotype file
+BD_data <- BD_data[( (BD_data$Cross == "CxPF2") | (BD_data$Cross == "PxCF1") 
+                | (BD_data$Cross == "CZECHI") | (BD_data$Cross == "PWD") 
+                | (BD_data$Cross == "CAST") | (BD_data$Cross == "PxCF2")  ), ]
 
 #subset BD data (don't include )
-BD_data <- subset(BD_data, select= -c( PixelHeight))#
+BD_data <- subset(BD_data, select= -c(InchWidth, InchHeight, PixelHeight, PixelWidth, RawDistFromCent, FractDistFromCent))
+#InchWidth, InchHeight, PixelHeight, PixelWidth, RawDistFromCent
+#FractDistFromCent
 
 #create file name col for merging with HVR data
 BD_data$file_name <- do.call(paste, c(BD_data[c("ANIMAL_ID", "Slide_ID", "CellNumber")], sep = "_")) 
@@ -107,7 +107,7 @@ category_numbers_full <- ddply(IFD_nMLH1, .(Cross.x), summarize,
                           sd_IFD   = sd(IFD)
                           #se   = sd / sqrt(N)
 )
-category_numbers_full #currently there is just one PWD, there should be 
+category_numbers_full
 #3 from HVR data and 10 from BD data
 
 category_numbers_HVR <- ddply(data_HVR_full, .(Cross), summarize,
@@ -121,7 +121,7 @@ category_numbers_HVR <- ddply(data_HVR_full, .(Cross), summarize,
 category_numbers_HVR
 
 #BDs lacie folder has 17 PWD folders, not sure why it's not in Excel sheet
-category_numbers_BD_full <- ddply(BD_MLH1_data, .(Cross), summarize,
+category_numbers_BD_full <- ddply(BD_data, .(Cross), summarize,
                                N_mice  = length(unique(ANIMAL_ID))#number of measurements
                                #N_IFD_MLH1 = ,
                               # mean_MLH1 = mean(IFD),
@@ -139,5 +139,6 @@ save.image("HVR_data_setup.RData")
 
 # CLEAN UP
 #save this list and use it to not add "REV" to when processing BD data
+#don't remove the user specific data set since the PWD measures don't comppletely overlap
 #rm(data_HVR)
 #rm(data_HRV_P0)

@@ -10,7 +10,6 @@ TODO
 Link this with the Setup data environment to create plots/figures to put in this rm file.
 Change to gitmd output
 
-### load data
 
 ```{r, setting, echo = FALSE, include=FALSE} 
 #make this block silent
@@ -23,42 +22,44 @@ library(dplyr)
 setwd("C:/Users/alpeterson7/Documents/HannahVR/HVRrepo")
 data<- load("HVR_data_setup.RData")
 
-new.data <- mergd_file_name %>% filter(!(IFD > 1000) )
 ```
 
 ### Header1, Summary of Interfocal Distances from a F2 Cross
 
 
 #### Initial Stats
+- number of mice used
 
+- mean and variance of MLH1 for each category (boxplots)
+
+- mean and variance of IFD for each category
 
 mouse specific tables to be used in plots. I should be able to add BD's data.
-```{r, tables}
-#mouse summary stats observations for each class
-image_data <- ddply(new.data, .(file_name), summarize,
-                        N_IFD = length(IFD),
-                        ncells = max(Cell.Count),
-                        prcnt_2CO = N_IFD / (ncells*19)
-            #number of cells / number of IFDs = proxy for proportion of 2COs            
-                        
+```{r, tables, echo=FALSE}
+#mice used in each category (HVR and BD)
+BD_mice_num <- ddply(BD_data, .(Cross), summarize,
+                        N_mice = length(unique(ANIMAL_ID)), 
+                     num_cells = length(nMLH1_foci)
 )
-
-mouse_data <- ddply(new.data, .(Animal.ID), summarize,
-                        N_IFD = length(IFD),
-                        ncells = max(Cell.Count),
-                        prcnt_2CO = N_IFD / (ncells*19)
-            #number of cells / number of IFDs = proxy for proportion of 2COs            
-                        
+  
+HVR_mice_num <- ddply(data_HVR_full, .(Cross), summarize,
+                        N_mice = length(unique(Animal.ID)), 
+                     num_IFD = length(IFD)
 )
-#mouse_data the mouse data is displayed in a very long table
+HVR_mice_num
+BD_mice_num
 ```
+Not all of the PWD from HVR data overlap with the PWD in BD data set.
+
+
 
 * histogram of IFD
+(the echo= false ) still produces some output code.
 ```{r, histIFD, echo=FALSE}
 #make sure outliers are removes
-hh <- hist(new.data$IFD)#adjust the axis names
+hh <- hist(IFD_nMLH1$IFD)#adjust the axis names
 
-gg <- hist(new.data$nMLH1_foci)
+gg <- hist(IFD_nMLH1$nMLH1_foci)
 hh
 gg
 ```

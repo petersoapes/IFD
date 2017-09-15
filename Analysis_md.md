@@ -11,27 +11,46 @@ This is a practice document for gitmd for the IFD repo. TODO Link this with the 
 
 #### Initial Stats
 
+-   number of mice used
+
+-   mean and variance of MLH1 for each category (boxplots)
+
+-   mean and variance of IFD for each category
+
 mouse specific tables to be used in plots. I should be able to add BD's data.
 
 ``` r
-#mouse summary stats observations for each class
-image_data <- ddply(new.data, .(file_name), summarize,
-                        N_IFD = length(IFD),
-                        ncells = max(Cell.Count),
-                        prcnt_2CO = N_IFD / (ncells*19)
-            #number of cells / number of IFDs = proxy for proportion of 2COs            
-                        
+#mice used in each category (HVR and BD)
+BD_mice_num <- ddply(BD_data, .(Cross), summarize,
+                        N_mice = length(unique(ANIMAL_ID)), 
+                     num_cells = length(nMLH1_foci)
 )
-
-mouse_data <- ddply(new.data, .(Animal.ID), summarize,
-                        N_IFD = length(IFD),
-                        ncells = max(Cell.Count),
-                        prcnt_2CO = N_IFD / (ncells*19)
-            #number of cells / number of IFDs = proxy for proportion of 2COs            
-                        
+  
+HVR_mice_num <- ddply(data_HVR_full, .(Cross), summarize,
+                        N_mice = length(unique(Animal.ID)), 
+                     num_cells = length(IFD)
 )
-#mouse_data the mouse data is displayed in a very long table
+HVR_mice_num
 ```
+
+    ##   Cross N_mice num_cells
+    ## 1  CAST      3       220
+    ## 2 CXPF2     72      7682
+    ## 3   PWD      3       573
+    ## 4            1       125
+    ## 5 CxPF1      2       231
+
+``` r
+BD_mice_num
+```
+
+    ##    Cross N_mice num_cells
+    ## 1   CAST      3        91
+    ## 2  CxPF2    269      5509
+    ## 3 CZECHI      7       156
+    ## 4    PWD     10       192
+    ## 5  PxCF1      1        40
+    ## 6  PxCF2      7       127
 
 -   histogram of IFD ![](Analysis_md_files/figure-markdown_github-ascii_identifiers/histIFD-1.png)![](Analysis_md_files/figure-markdown_github-ascii_identifiers/histIFD-2.png)
 
@@ -42,21 +61,21 @@ mouse_data <- ddply(new.data, .(Animal.ID), summarize,
     ## [18] 170 180
     ## 
     ## $counts
-    ##  [1]   55  147  215  536 1147 1667 1497  942  539  271  142   33   19   18
+    ##  [1]   55  149  217  553 1188 1712 1541  972  553  279  146   34   20   18
     ## [15]    1    4    2    3
     ## 
     ## $density
-    ##  [1] 7.598784e-04 2.030948e-03 2.970434e-03 7.405361e-03 1.584692e-02
-    ##  [6] 2.303122e-02 2.068251e-02 1.301464e-02 7.446809e-03 3.744128e-03
-    ## [11] 1.961868e-03 4.559271e-04 2.625035e-04 2.486875e-04 1.381597e-05
-    ## [16] 5.526389e-05 2.763194e-05 4.144791e-05
+    ##  [1] 7.385524e-04 2.000806e-03 2.913925e-03 7.425809e-03 1.595273e-02
+    ##  [6] 2.298912e-02 2.069290e-02 1.305224e-02 7.425809e-03 3.746475e-03
+    ## [11] 1.960521e-03 4.565597e-04 2.685645e-04 2.417081e-04 1.342823e-05
+    ## [16] 5.371290e-05 2.685645e-05 4.028468e-05
     ## 
     ## $mids
     ##  [1]   5  15  25  35  45  55  65  75  85  95 105 115 125 135 145 155 165
     ## [18] 175
     ## 
     ## $xname
-    ## [1] "new.data$IFD"
+    ## [1] "IFD_nMLH1$IFD"
     ## 
     ## $equidist
     ## [1] TRUE
@@ -68,21 +87,21 @@ mouse_data <- ddply(new.data, .(Animal.ID), summarize,
     ##  [1] 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37
     ## 
     ## $counts
-    ##  [1]  14  60 215 336 530 541 612 674 741 778 692 675 629 294 241 130  43
+    ##  [1]  14  61 215 336 552 571 619 695 770 804 709 693 642 319 241 130  43
     ## [18]  16  17
     ## 
     ## $density
-    ##  [1] 0.001934236 0.008289583 0.029704338 0.046421663 0.073224648
-    ##  [6] 0.074744405 0.084553744 0.093119646 0.102376347 0.107488256
-    ## [11] 0.095606521 0.093257806 0.086902459 0.040618956 0.033296491
-    ## [16] 0.017960763 0.005940868 0.002210555 0.002348715
+    ##  [1] 0.001879952 0.008191218 0.028870686 0.045118840 0.074123808
+    ##  [6] 0.076675171 0.083120720 0.093326172 0.103397341 0.107962938
+    ## [11] 0.095206123 0.093057607 0.086209212 0.042836041 0.032362025
+    ## [16] 0.017456694 0.005774137 0.002148516 0.002282798
     ## 
     ## $mids
     ##  [1] 18.5 19.5 20.5 21.5 22.5 23.5 24.5 25.5 26.5 27.5 28.5 29.5 30.5 31.5
     ## [15] 32.5 33.5 34.5 35.5 36.5
     ## 
     ## $xname
-    ## [1] "new.data$nMLH1_foci"
+    ## [1] "IFD_nMLH1$nMLH1_foci"
     ## 
     ## $equidist
     ## [1] TRUE
