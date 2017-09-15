@@ -73,3 +73,26 @@ The histogram appears normally distributed, but with a slight right tail.
 * min value per F2 mouse
 * normalized IFD **
 * relationsihp of total SC and CO number
+
+
+Examining/Comparing 
+These F2's were geenrated to compared the average CO number per cell across two HM subspecies. Comparing the the average propotions of bivalent types (1CO, 2CO ect) per cell breaks down that phenotype one more level.
+Approach; BD data, She filled out the proportions.
+
+HVR data (should match BD)
+```{r, class_proportions}
+
+
+mouseBivClass_proportions <- ddply(BD_data, .(ANIMAL_ID), summarize,
+                   #  Cross = as.factor(Cross),
+                    nChr = mean(nChr),
+                   nCells = length(nMLH1_foci),
+                     biv0CO =  mean( (as.numeric(nChrWithoutXO) ) ) / nCells,
+                     biv1CO =  mean( (as.numeric(nChrWith1XO) ) ) / nCells , 
+                     biv2CO =  mean( (as.numeric(nChrWith2XO) ) ) / nCells ,
+                     biv3CO =  mean( (as.numeric(nChrWith3.XO) ) )/ nCells 
+)
+#increase the denominator to nCells * 19
+
+
+```
