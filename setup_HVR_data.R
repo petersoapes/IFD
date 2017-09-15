@@ -62,68 +62,74 @@ nonrv <- unique(nonrv) #42 biv measures without REV
 nonrv <- gsub('.tif', '', nonrv)#remove '.tif' for better matching
 
 #LOAD BD data (why did I have two seperate files for BD data)
+
+BD_data = read.csv("C:/Users/alpeterson7/Documents/HannahVR/BD_RecombinationPhenotypes.csv", header=TRUE)
+#remove all strains but PWD, CAST and CXP PXC, PxCF2, PxCF1, WSBxCASTF1, CxPF1, CxPF2
+
+
 BDdata_F2 = read.csv("C:/Users/alpeterson7/Documents/HannahVR/BD_F2_RecombinationPhenotypes.csv", header=TRUE)
 BDdata_F2$ANIMAL_ID <- as.factor(BDdata_F2$ANIMAL_ID)
 #seprate by mouse, calculate average within mouse var  and average between mouse var
 BDdata_P0 = read.csv("C:/Users/alpeterson7/Documents/HannahVR/BD_MLH1_CASTxPWD_P0.csv", header=TRUE)
 BD_MLH1_data = rbind(BDdata_F2, BDdata_P0)
+#it seems like ~the first 7 PWD mice aren't in BD's master phenotype file
+
+#subset BD data (don't include )
+BD_data <- subset(BD_data, select= -c( PixelHeight))#
 
 #create file name col for merging with HVR data
-BD_MLH1_data$file_name <- do.call(paste, c(BD_MLH1_data[c("ANIMAL_ID", "Slide_ID", "CellNumber")], sep = "_")) 
+BD_data$file_name <- do.call(paste, c(BD_data[c("ANIMAL_ID", "Slide_ID", "CellNumber")], sep = "_")) 
 
 #don't know if this is working
-REV <- subset(BD_MLH1_data$file_name, !(BD_MLH1_data$file_name %in% nonrv) ) #this returns a matrix of T OR F
+REV <- subset(BD_data$file_name, !(BD_data$file_name %in% nonrv) ) #this returns a matrix of T OR F
 length(REV)#same length as full dataframe
 #IT seems like my versions of BD's data don't have the nonREV data... most 'file names should match (ie are useful for merging)
 
-#can't find the mice, (2144 and 2146 in BD's df)
+#can't find the mice, (2144 and 2146 in BD's df), 2146 and 2605 are the two PWD in HVR
+# there should be 3 HVR PWD mice, they should show up in BD data
 BD_MLH1_data$file_name <- paste( (BD_MLH1_data$file_name[!(BD_MLH1_data$file_name %in% nonrv)]) , "_REV.tif", sep="")
 
 #BD_MLH1_data <- subset(BD_MLH1_data, select = -c(file_name) )#$FractDistFromCent, RawDistFromCent
 #TODO for merge file, make sure cross categories are consistent, make sure file names are correct
 IFD_nMLH1 <- merge.data.frame(BD_MLH1_data, data_HVR_full, by.y = "File.ID", by.x = "file_name", all=FALSE)
 
-#rm(BDdata_P0, BDdata_F2)
+# subset some data
+data_PWD <- IFD_nMLH1[IFD_nMLH1$Cross.x == "PWD", ] #the file names for many PWD don't match
+data_CAST <- IFD_nMLH1[IFD_nMLH1$Cross.x == "CAST", ]
+data_F2 <- IFD_nMLH1[IFD_nMLH1$Cross.x == "CXPF2", ]
 
-#HVR df with F2 and P0s measures, File.ID columns are used for merging/matching to 
-#BD MLH1 data in next step (nonrv list)
+#Make some tables for basic stats. (number of categories)
+category_numbers_full <- ddply(IFD_nMLH1, .(Cross.x), summarize,
+                          N_mice  = length(unique(Animal.ID)),#number of measurements
+                          #N_IFD_MLH1 = ,
+                          mean_MLH1 = mean(IFD),
+                          var_IFD = var(IFD),#this is very large within mouse
+                          sd_IFD   = sd(IFD)
+                          #se   = sd / sqrt(N)
+)
+category_numbers_full #currently there is just one PWD, there should be 
+#3 from HVR data and 10 from BD data
 
+category_numbers_HVR <- ddply(data_HVR_full, .(Cross), summarize,
+                               N_mice  = length(unique(Animal.ID)),#number of measurements
+                               #N_IFD_MLH1 = ,
+                               mean_MLH1 = mean(IFD),
+                               var_IFD = var(IFD),#this is very large within mouse
+                               sd_IFD   = sd(IFD)
+                               #se   = sd / sqrt(N)
+)
+category_numbers_HVR
 
-#change CXPF2 to F2 OR viceversa
-
-#mlh1 <- BD_MLH1_data[BD_MLH1_data$Cross == "CxPF2", ]
-#mean(mlh1$nMLH1_foci )
-
-
-
-#HVR length(data_HVR_full$File.ID), 7485
-#BD length(BD_MLH1_data$file_name)
-
-#file_BD_only <- setdiff(BD_MLH1_data$file_name, data_HVR_full$File.ID)#4945
-#file_BD_only <- setdiff(data_HVR_full$File.ID, BD_MLH1_data$file_name)#99
-#not_passed_mice <- data.frame(not_passed_mice)
-#colnames(not_passed_mice) <- c("mouse")
-
-#correctly merging BD' MLH1 data to HVR IFD data
-# - remove cells from BD data not in HVR data
-
-
-for(j in 1:length(mergd_file_name$File.ID)){
-  # data_HVR_P0$n3CO[j] = CO3s$n3CO[ match( CO3s$File.ID, data_HVR_P0$File.ID[j])]
-  data_HVR_P0$n3CO[j] = CO3s[data_HVR_P0$File.ID[j] %in% CO3s$File.ID]$n3CO
-}
-
-
-
-data_PWD <- mergd_file_name[mergd_file_name$Cross.x == "PWD", ] #the file names for many PWD don't match
-data_CAST <- mergd_file_name[mergd_file_name$Cross.x == "CAST", ]
-data_F2 <- mergd_file_name[mergd_file_name$Cross.x == "CxPF2", ]
-
-#remove outliers
-#mergd_file_name <- mergd_file_name[mergd_file_name$IFD != max(mergd_file_name$IFD)]
-
-mergd_file_name <- mergd_file_name %>% filter(!(IFD > 1000) )#currently are 2 outliers
-
+#BDs lacie folder has 17 PWD folders, not sure why it's not in Excel sheet
+category_numbers_BD_full <- ddply(BD_MLH1_data, .(Cross), summarize,
+                               N_mice  = length(unique(ANIMAL_ID))#number of measurements
+                               #N_IFD_MLH1 = ,
+                              # mean_MLH1 = mean(IFD),
+                              # var_IFD = var(IFD),#this is very large within mouse
+                              # sd_IFD   = sd(IFD)
+                               #se   = sd / sqrt(N)
+)
+category_numbers_BD_full
 
 
 #FINAL 
