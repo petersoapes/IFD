@@ -16,7 +16,7 @@ data_HVR_P0$File.ID <- ifelse( grepl("CAST", data_HVR_P0$File.ID), paste(data_HV
 
 #this colnames, should be changed in the original google doc file.
 colnames(data_HVR_P0) <- c( "File.ID","Cross","Animal.ID", 
-                           "Cell.Count", "n3CO", "Biv.ID", "IFD")
+                   "Cell.Count", "n3CO", "Biv.ID", "IFD")
 
 #fill in animal.id cells
 for(i in 1:length(data_HVR_P0$File.ID)){
@@ -80,6 +80,10 @@ BD_data$file_name <- paste( (BD_data$file_name[!(BD_data$file_name %in% nonrv)])
 
 #merge HVR and BD dataframes, make sure cross categories are consistent, make sure file names are correct
 IFD_nMLH1 <- merge.data.frame(BD_data, data_HVR_full, by.y = "File.ID", by.x = "file_name", all=FALSE)
+
+#make a table for F2 mice (with min and max IFDs) 
+
+
 
 # CLEAN UP
 #don't remove the user specific data set since the PWD measures don't comppletely overlap

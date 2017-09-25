@@ -19,14 +19,28 @@ library(gridExtra)
 library(pwr)
 library(dplyr)
 
-setwd("C:/Users/alpeterson7/Documents/HannahVR/HVRrepo")
+#setwd("C:/Users/alpeterson7/Documents/HannahVR/HVRrepo")
 data<- load("HVR_data_setup.RData")
-
 ```
 
 ### Summary of Interfocal Distances from a F2 Cross
 
 discription of the data and purpose of Analysis. BD data of MLH1 measures in meiotice cells. HVR measures of inter-focal distances of foci on the same bivalent. 
+
+#### Patterns to look at
+* proportion of CO classes (per mouse)
+* range of proportion classes
+* mean and variation of IFD
+* min value per F2 mouse
+* normalized IFD **
+* relationsihp of total SC and CO number
+
+
+These F2's were genrated to compared the average CO number per cell across two HM subspecies. Comparing the the average propotions of bivalent types (1CO, 2CO ect) per cell breaks down that phenotype one more level.
+Approach; BD data, She filled out the proportions.
+
+Since measuring the proportion of object classes from HVR's data would require the assumption that there are no 0COs, (which is not true), Useing BD's data will be more acurate. 
+But the general approach of quantifying CO proportions from HVR data would be something like... 19 - ( length(IFD) - n3CO*2).
 
 #### Initial Stats
 - number of mice used
@@ -53,9 +67,6 @@ BD_mice_num
 Not all of the PWD from HVR data overlap with the PWD in BD data set.
 
 
-
-* histogram of IFD
-(the echo= false ) still produces some output code.
 ```{r, histIFD, echo=FALSE, include = FALSE}
 #make sure outliers are removes
 hh <- hist(IFD_nMLH1$IFD)#adjust the axis names
@@ -64,23 +75,11 @@ gg <- hist(IFD_nMLH1$nMLH1_foci)
 hh
 gg
 ```
+
 The histogram appears normally distributed, but with a slight right tail.
 
-#### Things to look at
-* proportion of CO classes (per mouse)
-* range of proportion classes
-* mean and variation of IFD
-* min value per F2 mouse
-* normalized IFD **
-* relationsihp of total SC and CO number
 
-
-These F2's were genrated to compared the average CO number per cell across two HM subspecies. Comparing the the average propotions of bivalent types (1CO, 2CO ect) per cell breaks down that phenotype one more level.
-Approach; BD data, She filled out the proportions.
-
-Since measuring the proportion of object classes from HVR's data would require the assumption that there are no 0COs, (which is not true), Useing BD's data will be more acurate. 
-But the general approach of quantifying CO proportions from HVR data would be something like... 19 - ( length(IFD) - n3CO*2).
-```{r, class_proportions}
+```{r, class_proportions, echo=FALSE, include=FALSE}
 BDmouseBivClass_proportions <- ddply(BD_data, .(ANIMAL_ID), summarize,
                    #  Cross = as.factor(Cross),
                     nChr = mean(nChr),
@@ -94,14 +93,50 @@ BDmouseBivClass_proportions <- ddply(BD_data, .(ANIMAL_ID), summarize,
 # should the proportions be compared to the MLH1 number?
 
 # match these mice to the mice in IFD_MLH1, 
+BDmouseBivClass_proportions
 
 ```
 
-#### range and distribution of IFD measures.
-```{r, IFD plots}
 
-#IFD_bxplt <- boxplot((IFD_nMLH1$ANIMAL_ID), IFD_nMLH1$IFD, main= "IFD distributions")
-#use ggplot
+#### Range and Minimums of IFD measures.
 
-#IFD_bxplt
+The following plots display the ranges of IFDs, the min and max distances between two foci. Figure out how to assess these relationships with the proportion of object classes. For example test hypothesis that smaller range has a smaller proportion of 3COs.
+
+How could variation in min IFD values, play a role in regulation of IFD. 
+
+There doesn't seem to be any relationship between min values and the range. There might be a relationship with the number of measurements. 
+
+
+```{r, echo=FALSE}
+
+P0 <- IFD_nMLH1[(IFD_nMLH1$Cross.x == "CAST" | IFD_nMLH1$Cross.x == "PWD"), ]
+F2 <- IFD_nMLH1[IFD_nMLH1$Cross.x == "CxPF2", ]
+
+#make F2 mouse data table (with min and max)
+F2_table <- ddply(F2, .(Animal.ID), summarise,
+              total_ifd =  length(IFD),
+              mean_IFD = mean(IFD), 
+              min = min(IFD),
+              max = max(IFD),
+              range = max-min,
+              var= var(IFD)
+)
+#F2_table <- F2_table[order(F2_table$range),]
+#order.range <- order(F2_table$range)
+#F2_table<- F2_table[order.range, ]
+
+rr <- ggplot(F2_table, aes(x = reorder(Animal.ID, range), y = mean)) +  geom_linerange(aes(ymin = min, ymax =max)) + ggtitle("F2 variation in IFD ranges") + theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
+rr
+
+mm <- ggplot(F2_table, aes(x = reorder(Animal.ID, -min), y = mean)) +  geom_linerange(aes(ymin = min, ymax =max)) +ggtitle("F2 variation in Minimum IFD values") + theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
+mm
+
+vv <- ggplot(F2_table, aes(x = reorder(Animal.ID, var), y = mean)) +  geom_linerange(aes(ymin = min, ymax =max)) + ggtitle("F2 variation in IFD variance") + theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
+vv
 ```
