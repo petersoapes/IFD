@@ -56,7 +56,7 @@ Not all of the PWD from HVR data overlap with the PWD in BD data set.
 
 * histogram of IFD
 (the echo= false ) still produces some output code.
-```{r, histIFD, echo=FALSE}
+```{r, histIFD, echo=FALSE, include = FALSE}
 #make sure outliers are removes
 hh <- hist(IFD_nMLH1$IFD)#adjust the axis names
 
