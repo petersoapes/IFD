@@ -43,13 +43,7 @@ Since measuring the proportion of object classes from HVR's data would require t
 But the general approach of quantifying CO proportions from HVR data would be something like... 19 - ( length(IFD) - n3CO*2).
 
 #### Initial Stats
-- number of mice used
 
-- mean and variance of MLH1 for each category (boxplots)
-
-- mean and variance of IFD for each category
-
-mouse specific tables to be used in plots. I should be able to add BD's data.
 ```{r, tables, echo=FALSE}
 #mice used in each category (HVR and BD)
 BD_mice_num <- ddply(BD_data, .(Cross), summarize,
@@ -64,27 +58,32 @@ HVR_mice_num <- ddply(data_HVR_full, .(Cross), summarize,
 HVR_mice_num
 BD_mice_num
 ```
-Not all of the PWD from HVR data overlap with the PWD in BD data set.
+(Not all of the PWD from HVR data overlap with the PWD in BD data set.)
 
 
-```{r, histIFD, echo=FALSE, include = FALSE}
+```{r, histIFD, echo=FALSE}
 #make sure outliers are removes
+#seperate by mice, indicate the parental values
+
 hh <- hist(IFD_nMLH1$IFD)#adjust the axis names
 
+
 gg <- hist(IFD_nMLH1$nMLH1_foci)
-hh
-gg
+
 ```
 
 The histogram appears normally distributed, but with a slight right tail.
 
+#### Bivalent Class proportions table
 
-```{r, class_proportions, echo=FALSE, include=FALSE}
+BD's table has columns for the number of X0, 1X0, 2XO and 3XO. This can be used to calculate the average proportion of each object class. 
+
+```{r, class_proportions, echo=FALSE}
 BDmouseBivClass_proportions <- ddply(BD_data, .(ANIMAL_ID), summarize,
                    #  Cross = as.factor(Cross),
                     nChr = mean(nChr),
                    nCells = length(nMLH1_foci),
-                     biv0CO =  mean( (as.numeric(nChrWithoutXO) ) ) / nCells,
+                     biv0CO =  mean( (as.numeric(nChrWithoutXO) ) ) / nCells ,
                      biv1CO =  mean( (as.numeric(nChrWith1XO) ) ) / nCells , 
                      biv2CO =  mean( (as.numeric(nChrWith2XO) ) ) / nCells ,
                      biv3CO =  mean( (as.numeric(nChrWith3.XO) ) )/ nCells 
@@ -93,10 +92,31 @@ BDmouseBivClass_proportions <- ddply(BD_data, .(ANIMAL_ID), summarize,
 # should the proportions be compared to the MLH1 number?
 
 # match these mice to the mice in IFD_MLH1, 
-BDmouseBivClass_proportions
+head(BDmouseBivClass_proportions)
+tail(BDmouseBivClass_proportions)
+```
+#### visualizing proportions (under construction)
+
+I want the 4 average proportions for each class inked in some way. 
+scatter plot, line_range with points for each class, 
+(examining acverage proportion of 0CO and average SC could provid a proxy for estimating CO maturity)
+
+
+```{r, echo = FALSE}
+plot(BDmouseBivClass_proportions$biv0CO, ylim=c(-.05, 1.05), col="black")
+
+points(BDmouseBivClass_proportions$biv1CO, col="blue")
+
+points(BDmouseBivClass_proportions$biv2CO, col="red")
+
+points(BDmouseBivClass_proportions$biv3CO, col="orange")
 
 ```
 
+black 0CO, blue 1CO, red 2CO, 3CO orange.
+Points should follow the same vertical line for each mouse.
+
+This plot displays a general pattern of 3CO bivs being rarer than 0CO bivs. 2COs are usually at a higher proportion than 1COs (F2s). Without linking all the proportions per mouse, this figure is not that useful.
 
 #### Range and Minimums of IFD measures.
 
@@ -125,18 +145,36 @@ F2_table <- ddply(F2, .(Animal.ID), summarise,
 #order.range <- order(F2_table$range)
 #F2_table<- F2_table[order.range, ]
 
-rr <- ggplot(F2_table, aes(x = reorder(Animal.ID, range), y = mean)) +  geom_linerange(aes(ymin = min, ymax =max)) + ggtitle("F2 variation in IFD ranges") + theme(axis.title.x=element_blank(),
+rr <- ggplot(F2_table, aes(x = reorder(Animal.ID, range), y = mean_IFD)) +  geom_linerange(aes(ymin = min, ymax =max)) + ggtitle("F2 variation in IFD ranges") + theme(axis.title.x=element_blank(),
         axis.text.x=element_blank(),
         axis.ticks.x=element_blank())
 rr
 
-mm <- ggplot(F2_table, aes(x = reorder(Animal.ID, -min), y = mean)) +  geom_linerange(aes(ymin = min, ymax =max)) +ggtitle("F2 variation in Minimum IFD values") + theme(axis.title.x=element_blank(),
+mm <- ggplot(F2_table, aes(x = reorder(Animal.ID, -min), y = mean_IFD)) +  geom_linerange(aes(ymin = min, ymax =max)) +ggtitle("F2 variation in Minimum IFD values") + theme(axis.title.x=element_blank(),
         axis.text.x=element_blank(),
         axis.ticks.x=element_blank())
 mm
 
-vv <- ggplot(F2_table, aes(x = reorder(Animal.ID, var), y = mean)) +  geom_linerange(aes(ymin = min, ymax =max)) + ggtitle("F2 variation in IFD variance") + theme(axis.title.x=element_blank(),
+vv <- ggplot(F2_table, aes(x = reorder(Animal.ID, var), y = mean_IFD)) +  geom_linerange(aes(ymin = min, ymax =max)) + ggtitle("F2 variation in IFD variance") + theme(axis.title.x=element_blank(),
         axis.text.x=element_blank(),
         axis.ticks.x=element_blank())
 vv
+```
+
+Parental versions
+```{r, echo=FALSE}
+P0 <- IFD_nMLH1[(IFD_nMLH1$Cross.x == "CAST" | IFD_nMLH1$Cross.x == "PWD"), ]
+
+P0_table <- ddply(P0, .(Animal.ID), summarise,
+              total_ifd =  length(IFD),
+              mean_IFD = mean(IFD), 
+              min = min(IFD),
+              max = max(IFD),
+              range = max-min,
+              var= var(IFD)
+)
+
+pp <- ggplot(P0_table, aes(x = reorder(Animal.ID, range), y = mean_IFD)) +  geom_linerange(aes(ymin = min, ymax =max)) + ggtitle("P0 variation in IFD ranges") + theme(axis.title.x=element_blank())
+pp
+
 ```
