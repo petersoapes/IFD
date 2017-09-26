@@ -69,6 +69,26 @@ BD_data <- BD_data[( (BD_data$Cross == "CxPF2") | (BD_data$Cross == "PxCF1")
 BD_data <- subset(BD_data, select= -c(InchWidth, InchHeight, PixelHeight, PixelWidth, RawDistFromCent, FractDistFromCent))
 #InchWidth, InchHeight, PixelHeight, PixelWidth, RawDistFromCent#FractDistFromCent
 
+
+# make new column that standardizes the entries in nChrm columns (ie chromosome classes) (10 levels, X most common, 0 second most)
+#ignore reference to X, # 'X+1' and variations should be '1', there should be 3 levels; 0,1,2
+#levels(BD_data$nChrWithoutXO)
+#make this an ifelse, 0 and X =0, and 1, 1+x, X+1 = 1 and X=2 = 2
+
+BD_data$nChrWith0X <- ifelse( grepl("2", BD_data$nChrWithoutXO), 2,
+              ifelse( grepl("1",  BD_data$nChrWithoutXO), 1,
+              ifelse( ( (BD_data$nChrWithoutXO == "X" ) | (BD_data$nChrWithoutXO == "Y") | (BD_data$nChrWithoutXO == "0") ), 0, "")))
+  
+
+
+#"as numeric applied to factors is meaningless"
+#as.numeric(as.character(f))
+
+BD_data$nChrWith1XO <- as.numeric(as.character(BD_data$nChrWith1XO))
+
+BD_data$nChrWith2XO <- as.numeric(as.character(BD_data$nChrWith2XO) )
+BD_data$nChrWith3.XO <- as.numeric(as.character(BD_data$nChrWith3.XO) )
+
 #create file name col for merging with HVR data
 BD_data$file_name <- do.call(paste, c(BD_data[c("ANIMAL_ID", "Slide_ID", "CellNumber")], sep = "_")) 
 

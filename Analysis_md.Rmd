@@ -18,6 +18,7 @@ library(ggplot2)
 library(gridExtra)
 library(pwr)
 library(dplyr)
+library(mmod)
 
 #setwd("C:/Users/alpeterson7/Documents/HannahVR/HVRrepo")
 data<- load("HVR_data_setup.RData")
@@ -78,16 +79,24 @@ The histogram appears normally distributed, but with a slight right tail.
 
 BD's table has columns for the number of X0, 1X0, 2XO and 3XO. This can be used to calculate the average proportion of each object class. 
 
-```{r, class_proportions, echo=FALSE}
-BDmouseBivClass_proportions <- ddply(BD_data, .(ANIMAL_ID), summarize,
-                   #  Cross = as.factor(Cross),
-                    nChr = mean(nChr),
+```{r, class_proportions, echo=FALSE, warning=FALSE}
+BD_F2 <- BD_data[BD_data$Cross == "CxPF2", ]
+
+BDmouseBivClass_proportions <- ddply(BD_F2, .(ANIMAL_ID), summarize,
+                    nChr = sum(nChr-1),
                    nCells = length(nMLH1_foci),
-                     biv0CO =  mean( (as.numeric(nChrWithoutXO) ) ) / nCells ,
-                     biv1CO =  mean( (as.numeric(nChrWith1XO) ) ) / nCells , 
-                     biv2CO =  mean( (as.numeric(nChrWith2XO) ) ) / nCells ,
-                     biv3CO =  mean( (as.numeric(nChrWith3.XO) ) )/ nCells 
+                     biv0CO =mean( ((nChrWith0X) ),  na.rm=TRUE ),#this col is tricky, X or 1 number
+                     biv1CO =mean( ((nChrWith1XO) ),  na.rm=TRUE ), 
+                     biv2CO =mean( ((nChrWith2XO) ),  na.rm=TRUE ),
+                     biv3CO =mean( ((nChrWith3.XO) ),  na.rm=TRUE )
+                   
+                  # varbiv0CO =var( (as.numeric(nChrWith0X) ) ),#this col is tricky, X or 1 number
+              #       varbiv1CO =var( (as.numeric(nChrWith1XO) ) ), 
+               #      varbiv2CO =var( (as.numeric(nChrWith2XO) ) ),
+                #     varbiv3CO =var( (as.numeric(nChrWith3.XO) ) ),
+                 #  varMLH1 = var(nMLH1_foci)
 )
+#BDmouseBivClass_proportions
 #increase the denominator to nCells * 19
 # should the proportions be compared to the MLH1 number?
 
@@ -101,22 +110,72 @@ I want the 4 average proportions for each class inked in some way.
 scatter plot, line_range with points for each class, 
 (examining acverage proportion of 0CO and average SC could provid a proxy for estimating CO maturity)
 
+Strange observations:
+ - F2's have a higher proportion of 2COs than 1COs
+ - 3CO seem higher than they should be
+ 
+Fixed
+ - 0XO was fixed since orignal df had an inconsistant column
 
 ```{r, echo = FALSE}
-plot(BDmouseBivClass_proportions$biv0CO, ylim=c(-.05, 1.05), col="black")
+#don't know why the plot below is broke
+#plot(BDmouseBivClass_proportions$biv1CO, ylim=c(0, 50), col="black")#ylim=c(0, 0.1),
+#points(BDmouseBivClass_proportions$biv2CO, ylim=c(0, 50), col="red")
 
-points(BDmouseBivClass_proportions$biv1CO, col="blue")
+groups <- plot( c(BDmouseBivClass_proportions$biv1CO,BDmouseBivClass_proportions$biv2CO, BDmouseBivClass_proportions$biv3CO),
+      ylim=c(0, 20), col=c("black", "red", "blue") )
 
-points(BDmouseBivClass_proportions$biv2CO, col="red")
-
-points(BDmouseBivClass_proportions$biv3CO, col="orange")
-
+#points(BDmouseBivClass_proportions$biv1CO, col="blue")
+#points(BDmouseBivClass_proportions$biv3CO, ylim=c(0, 50), col="orange")
+#lines(BDmouseBivClass_proportions(ANIMAL_ID), pch=16)
+groups
 ```
+
+<the above plot isn't showing...>
+The above plot, isnt exactly what I want but it shows the expected pattern for mean 1co,2co and 3co proportions. (Higher 1CO compared to 2CO)
+
 
 black 0CO, blue 1CO, red 2CO, 3CO orange.
 Points should follow the same vertical line for each mouse.
 
 This plot displays a general pattern of 3CO bivs being rarer than 0CO bivs. 2COs are usually at a higher proportion than 1COs (F2s). Without linking all the proportions per mouse, this figure is not that useful.
+
+```{r, include=FALSE}
+#median raw 3CO numbers are all 2
+BDmouseBivClass_proportions2 <- ddply(BD_F2, .(ANIMAL_ID), summarize,
+                   #  Cross = as.factor(Cross),
+                    nChr = sum(nChr-1),
+                   nCells = length(nMLH1_foci),
+                     biv0CO =median( (as.numeric(nChrWith0X)/nChr ) ),
+                     biv1CO =median( (as.numeric(nChrWith1XO)/nChr ) ), 
+                     biv2CO =median( (as.numeric(nChrWith2XO)/nChr ) ),
+                     biv3CO =median( (as.numeric(nChrWith3.XO)/nChr ) ) 
+)
+
+#harmonic mean, 1/mean(1/a)
+BDmouseBivClass_proportions3 <- ddply(BD_F2, .(ANIMAL_ID), summarize,
+                   #  Cross = as.factor(Cross),
+                    nChr = sum(nChr),
+                   nCells = length(nMLH1_foci),
+                     biv0CO =harmonic_mean( (as.numeric(nChrWith0X) ) ),
+                     biv1CO =harmonic_mean( (as.numeric(nChrWith1XO) ) ), 
+                     biv2CO =harmonic_mean( (as.numeric(nChrWith2XO) ) ),
+                     biv3CO =harmonic_mean( (as.numeric(nChrWith3.XO) ) ) 
+)
+
+```
+
+```{r, include = FALSE}
+plot(BDmouseBivClass_proportions2$biv1CO, ylim=c(0, 0.1), col="black")
+
+points(BDmouseBivClass_proportions2$biv0CO,ylim=c(0, 0.1), col="blue")
+
+points(BDmouseBivClass_proportions2$biv2CO,ylim=c(0, 0.1), col="red")
+
+points(BDmouseBivClass_proportions2$biv3CO,ylim=c(0, 0.1), col="orange")
+```
+
+
 
 #### Range and Minimums of IFD measures.
 
