@@ -77,7 +77,7 @@ This plot displays a general pattern of 3CO bivs being rarer than 0CO bivs. 2COs
 
 #### Range and Minimums of IFD measures.
 
-The following plots display the ranges of IFDs, the min and max distances between two foci. Figure out how to assess these relationships with the proportion of object classes. For example test hypothesis that smaller range has a smaller proportion of 3COs.
+The following plots display the ranges of IFDs, the min and max distances between two foci. Check effects of 3COs. These data could skew the min IFD values. The current data frame, has a column with a counter of 3CO per cell.
 
 How could variation in min IFD values, play a role in regulation of IFD.
 
