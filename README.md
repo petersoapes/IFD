@@ -1,3 +1,12 @@
+### Todo
+
+- update questions / main results
+- compare IFD and gamma nu measures
+- add simluations for subsampling to account for different sample sizes)
+- clarify mean IFD (per cell, per mouse?)
+- analyze nested ANOVA and partitioned variance patterns
+- is there a make pipeline for this?
+
 ### Measuring Inter Focal Distances in spermatocyte Spreads
 
 
